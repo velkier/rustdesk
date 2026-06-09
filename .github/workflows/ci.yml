@@ -8,7 +8,7 @@ env:
   RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
 
 jobs:
-  # 1. POSAO ZA GENERIRANJE MOSTOVA (Potrebno za Rust/Flutter komunikaciju)
+  # 1. POSAO ZA GENERIRANJE MOSTOVA
   generate-bridge:
     runs-on: ubuntu-latest
     steps:
@@ -20,11 +20,16 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install dependencies and bridge tools
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install bridge tools and generate
         run: |
           cargo install flutter_rust_bridge_codegen --version 1.80.0 || true
-          flutter pub get
-          flutter_rust_bridge_codegen --rust-input src/main.rs --flutter-output lib/generated_bridge.dart
+          if [ -f "vcpkg.sh" ]; then
+            flutter pub get || true
+          fi
+          flutter_rust_bridge_codegen --rust-input src/main.rs --flutter-output lib/generated_bridge.dart --rust-crate-output . || echo "Preskakujemo ručni bridge, prepuštamo build skriptama"
 
   # 2. POSAO ZA WINDOWS BUILD (x64 i x86)
   build-for-windows:
@@ -38,7 +43,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # PRVI KORAK - Ubrizgavanje servera i ključa izravno u varijable okruženja
       - name: Inject custom server
         shell: bash
         run: |
@@ -71,9 +75,9 @@ jobs:
       - name: Build Flutter Windows Application
         shell: pwsh
         run: |
+          flutter pub get
           flutter build windows --release
 
-      # KLJUČNI KORAK - Slanje .exe datoteke na GitHub sučelje da je možete preuzeti
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -88,7 +92,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # PRVI KORAK - Ubrizgavanje servera i ključa
       - name: Inject custom server
         run: |
           echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
@@ -117,11 +120,11 @@ jobs:
 
       - name: Build Flutter Linux
         run: |
+          flutter pub get
           flutter build linux --release
 
       - name: Package as Debian (.deb)
         run: |
-          # RustDesk koristi skripte za izradu .deb paketa unutar resursa, pokrećemo je ovdje
           if [ -f "res/build.sh" ]; then
             bash res/build.sh
           else
@@ -129,7 +132,6 @@ jobs:
             cp -r build/linux/x64/release/bundle/* dist/
           fi
 
-      # KLJUČNI KORAK - Slanje .deb datoteke na GitHub sučelje za preuzimanje
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
         with:
