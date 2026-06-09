@@ -8,7 +8,7 @@ env:
   RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
 
 jobs:
-  # 1. GENERIRANJE MOSTOVA (Tvornički RustDesk posao)
+  # 1. POPRAVLJENO GENERIRANJE MOSTOVA (Točni parametri --dart-output)
   generate-bridge:
     runs-on: ubuntu-24.04
     steps:
@@ -28,9 +28,9 @@ jobs:
           cd flutter
           flutter pub get
           cargo install flutter_rust_bridge_codegen --version 1.80.0 --bin flutter_rust_bridge_codegen
-          flutter_rust_bridge_codegen --rust-input ../src/main.rs --flutter-output lib/generated_bridge.dart --rust-crate-output ../
+          flutter_rust_bridge_codegen --rust-input ../src/main.rs --dart-output lib/generated_bridge.dart --rust-crate-output ../
 
-  # 2. WINDOWS FLUTTER BUILD (Tvornički RustDesk posao)
+  # 2. WINDOWS FLUTTER BUILD
   build-for-windows-flutter:
     name: Build Windows
     needs: [generate-bridge]
@@ -45,7 +45,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # PRVI STEP: Ubrizgavanje vašeg servera
       - name: Inject custom server
         shell: bash
         run: |
@@ -83,7 +82,7 @@ jobs:
           name: rustdesk-windows-${{ matrix.job.arch }}
           path: flutter/build/windows/runner/Release/
 
-  # 3. LINUX DEBIAN BUILD (Tvornički RustDesk posao)
+  # 3. LINUX DEBIAN BUILD
   build-for-linux-debian:
     name: Build Linux Debian
     needs: [generate-bridge]
@@ -92,7 +91,6 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # PRVI STEP: Ubrizgavanje vašeg servera
       - name: Inject custom server
         run: |
           echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
