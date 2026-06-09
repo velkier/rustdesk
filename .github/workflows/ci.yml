@@ -1,4 +1,52 @@
- vcpkg_local
+name: Custom RustDesk Build
+
+on:
+  workflow_dispatch:
+
+env:
+  RUSTDESK_ID_SERVER: "167.233.51.96"
+  RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
+  flutter_version: "3.22.2"
+  rust_version: "1.79.0"
+
+jobs:
+  build-for-windows-flutter:
+    name: Windows Build
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Inject custom server
+        shell: bash
+        run: |
+          echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
+          echo "RUSTDESK_KEY=${{ env.RUSTDESK_KEY }}" >> $GITHUB_ENV
+
+      - name: Configure Pre-installed LLVM/Clang
+        shell: pwsh
+        run: |
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.rust_version }}
+          targets: ${{ matrix.target }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.flutter_version }}
+
+      - name: Install Vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com vcpkg_local
           cd vcpkg_local
           ./bootstrap-vcpkg.bat
           echo "VCPKG_ROOT=$PWD" | Out-File -FilePath $env:GITHUB_ENV -Append
@@ -46,7 +94,6 @@
 
       - name: Build Linux Package
         run: |
-          # Provjera strukture i automatsko pozicioniranje u korijen projekta
           flutter pub get
           if [ -d "flutter" ]; then
             cd flutter
