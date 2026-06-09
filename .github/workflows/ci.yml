@@ -8,12 +8,14 @@ env:
   RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
 
 jobs:
-  # 1. POPRAVLJENO GENERIRANJE MOSTOVA (Točni parametri --rust-crate-dir)
+  # 1. GENERIRANJE MOSTOVA (Popravljeno povlačenje podmodula)
   generate-bridge:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # KLJUČNO: preuzima sve skrivene mape poput libs/hbb_common
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -44,6 +46,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # Preuzima podmodule i za Windows okruženje
 
       - name: Inject custom server
         shell: bash
@@ -90,6 +94,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive # Preuzima podmodule i za Linux okruženje
 
       - name: Inject custom server
         run: |
