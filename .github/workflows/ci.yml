@@ -8,7 +8,7 @@ env:
   RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
 
 jobs:
-  # 1. POPRAVLJENO GENERIRANJE MOSTOVA (Točni parametri --dart-output)
+  # 1. POPRAVLJENO GENERIRANJE MOSTOVA (Točni parametri --rust-crate-dir)
   generate-bridge:
     runs-on: ubuntu-24.04
     steps:
@@ -28,7 +28,7 @@ jobs:
           cd flutter
           flutter pub get
           cargo install flutter_rust_bridge_codegen --version 1.80.0 --bin flutter_rust_bridge_codegen
-          flutter_rust_bridge_codegen --rust-input ../src/main.rs --dart-output lib/generated_bridge.dart --rust-crate-output ../
+          flutter_rust_bridge_codegen --rust-input ../src/main.rs --dart-output lib/generated_bridge.dart --rust-crate-dir ../
 
   # 2. WINDOWS FLUTTER BUILD
   build-for-windows-flutter:
