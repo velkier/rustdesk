@@ -27,9 +27,10 @@ jobs:
           echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
           echo "RUSTDESK_KEY=${{ env.RUSTDESK_KEY }}" >> $GITHUB_ENV
 
-      - name: Install LLVM/Clang (Zahtjev za Windows Build)
+      - name: Configure Pre-installed LLVM/Clang
+        shell: pwsh
         run: |
-          choco install -y llvm --version=15.0.2
+          # Budući da je LLVM već instaliran, samo prosljeđujemo njegovu putanju u sustav
           echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Set up Rust
@@ -46,7 +47,7 @@ jobs:
       - name: Install Vcpkg
         shell: pwsh
         run: |
-          git clone "https://github.com/microsoft/vcpkg.git" "$env:USERPROFILE\vcpkg"
+          git clone "https://github.com" "$env:USERPROFILE\vcpkg"
           & "$env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat"
           echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
 
