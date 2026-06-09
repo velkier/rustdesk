@@ -1,55 +1,7 @@
-name: Custom RustDesk Build
-
-on:
-  workflow_dispatch:
-
-env:
-  RUSTDESK_ID_SERVER: "167.233.51.96"
-  RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
-  flutter_version: "3.22.2"
-  rust_version: "1.79.0"
-
-jobs:
-  build-for-windows-flutter:
-    name: Windows Build
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Inject custom server
-        shell: bash
-        run: |
-          echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
-          echo "RUSTDESK_KEY=${{ env.RUSTDESK_KEY }}" >> $GITHUB_ENV
-
-      - name: Configure Pre-installed LLVM/Clang
-        shell: pwsh
-        run: |
-          # Budući da je LLVM već instaliran, samo prosljeđujemo njegovu putanju u sustav
-          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.rust_version }}
-          targets: ${{ matrix.target }}
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.flutter_version }}
-
-      - name: Install Vcpkg
-        shell: pwsh
-        run: |
-          git clone "https://github.com" "$env:USERPROFILE\vcpkg"
-          & "$env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat"
-          echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
+ vcpkg_local
+          cd vcpkg_local
+          ./bootstrap-vcpkg.bat
+          echo "VCPKG_ROOT=$PWD" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build and Package Windows
         shell: pwsh
@@ -94,8 +46,15 @@ jobs:
 
       - name: Build Linux Package
         run: |
+          # Provjera strukture i automatsko pozicioniranje u korijen projekta
           flutter pub get
-          python3 res/build.py --target x86_64-unknown-linux-gnu
+          if [ -d "flutter" ]; then
+            cd flutter
+            flutter pub get
+            python3 ../res/build.py --target x86_64-unknown-linux-gnu
+          else
+            python3 res/build.py --target x86_64-unknown-linux-gnu
+          fi
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
