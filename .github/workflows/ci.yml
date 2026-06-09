@@ -27,6 +27,11 @@ jobs:
           echo "RUSTDESK_ID_SERVER=${{ env.RUSTDESK_ID_SERVER }}" >> $GITHUB_ENV
           echo "RUSTDESK_KEY=${{ env.RUSTDESK_KEY }}" >> $GITHUB_ENV
 
+      - name: Install LLVM/Clang (Zahtjev za Windows Build)
+        run: |
+          choco install -y llvm --version=15.0.2
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_ENV -Append
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -41,9 +46,9 @@ jobs:
       - name: Install Vcpkg
         shell: pwsh
         run: |
-          git clone https://github.com
-          ./vcpkg/bootstrap-vcpkg.bat
-          echo "VCPKG_ROOT=$(Get-Location)/vcpkg" >> $env:GITHUB_ENV
+          git clone "https://github.com/microsoft/vcpkg.git" "$env:USERPROFILE\vcpkg"
+          & "$env:USERPROFILE\vcpkg\bootstrap-vcpkg.bat"
+          echo "VCPKG_ROOT=$env:USERPROFILE\vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build and Package Windows
         shell: pwsh
