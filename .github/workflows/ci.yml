@@ -8,14 +8,14 @@ env:
   RUSTDESK_KEY: "hbU4D9qK5zXR5NXPoAdHzUSL42hgT1kG+jw9lpEooJ0="
 
 jobs:
-  # 1. GENERIRANJE MOSTOVA (Popravljeno povlačenje podmodula)
+  # 1. GENERIRANJE MOSTOVA
   generate-bridge:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          submodules: recursive # KLJUČNO: preuzima sve skrivene mape poput libs/hbb_common
+          submodules: recursive
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -32,7 +32,7 @@ jobs:
           cargo install flutter_rust_bridge_codegen --version 1.80.0 --bin flutter_rust_bridge_codegen
           flutter_rust_bridge_codegen --rust-input ../src/main.rs --dart-output lib/generated_bridge.dart --rust-crate-dir ../
 
-  # 2. WINDOWS FLUTTER BUILD
+  # 2. WINDOWS FLUTTER BUILD (Popravljen vcpkg i .bat pokretanje)
   build-for-windows-flutter:
     name: Build Windows
     needs: [generate-bridge]
@@ -47,7 +47,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          submodules: recursive # Preuzima podmodule i za Windows okruženje
+          submodules: recursive
 
       - name: Inject custom server
         shell: bash
@@ -66,12 +66,14 @@ jobs:
           channel: 'stable'
 
       - name: Install vcpkg dependencies
-        shell: bash
+        shell: pwsh
         run: |
+          # Korištenje punog Git linka i ispravne .bat skripte za Windows okruženje
           git clone https://github.com vcpkg
-          ./vcpkg/bootstrap-vcpkg.sh
-          echo "VCPKG_ROOT=$PWD/vcpkg" >> $GITHUB_ENV
-          ./vcpkg/vcpkg install libvpx:${{ matrix.job.vcpkg-triplet }} libyuv:${{ matrix.job.vcpkg-triplet }} opus:${{ matrix.job.vcpkg-triplet }} aom:${{ matrix.job.vcpkg-triplet }}
+          cd vcpkg
+          ./bootstrap-vcpkg.bat
+          echo "VCPKG_ROOT=$(Get-Location)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          ./vcpkg install libvpx:${{ matrix.job.vcpkg-triplet }} libyuv:${{ matrix.job.vcpkg-triplet }} opus:${{ matrix.job.vcpkg-triplet }} aom:${{ matrix.job.vcpkg-triplet }}
 
       - name: Build Windows Application
         shell: bash
@@ -95,7 +97,7 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
         with:
-          submodules: recursive # Preuzima podmodule i za Linux okruženje
+          submodules: recursive
 
       - name: Inject custom server
         run: |
